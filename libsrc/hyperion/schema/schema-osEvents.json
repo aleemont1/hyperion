@@ -27,6 +27,21 @@
 				}
 			},
 			"propertyOrder": 3
+		},
+		"lockDelay": {
+			"type": "integer",
+			"required": false,
+			"title": "edt_conf_os_events_lockDelay_title",
+			"default": 0,
+			"minimum": 0,
+			"maximum": 3600,
+			"append": "edt_append_s",
+			"options": {
+				"dependencies": {
+					"lockEnable": true
+				}
+			},
+			"propertyOrder": 4
 		}
 	},
 	"additionalProperties" : false

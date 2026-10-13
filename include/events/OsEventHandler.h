@@ -2,6 +2,7 @@
 #define OSEVENTHANDLER_H
 
 #include <QObject>
+#include <QTimer>
 #include <QJsonDocument>
 #include <QLoggingCategory>
 
@@ -41,6 +42,9 @@ public slots:
 signals:
 	void signalEvent(Event event);
 
+private:
+	void applyLockState();
+
 protected:
 	virtual bool registerOsEventHandler() { return true; }
 	virtual void unregisterOsEventHandler() {}
@@ -50,6 +54,11 @@ protected:
 	bool _isSuspendEnabled;
 	bool _isLockEnabled;
 	bool _isSuspendOnLock;
+	int _lockDelayMs;          ///< time the screen must stay locked before LEDs are switched off
+	bool _isLocked;
+	bool _lockStateApplied;    ///< suspend/idle was sent for the current lock
+	bool _lockAppliedSuspend;  ///< ... and it was a suspend (otherwise idle)
+	QTimer _lockTimer;
 
 	bool _isSuspendRegistered;
 	bool _isLockRegistered;

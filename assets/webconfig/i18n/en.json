@@ -514,6 +514,8 @@
   "edt_conf_network_port_validation_error": "Port cannot be the same as for $1",
   "edt_conf_network_restirctedInternetAccessAPI_expl": "You can restrict API requests over the Internet to only those IP addresses on the whitelist.",
   "edt_conf_network_restirctedInternetAccessAPI_title": "Restrict to IP addresses",
+  "edt_conf_os_events_lockDelay_expl": "How long the screen has to stay locked, in seconds, before the LEDs are switched off. They come back as soon as it is unlocked. 0 switches them off immediately",
+  "edt_conf_os_events_lockDelay_title": "Switch off after lock",
   "edt_conf_os_events_lockEnable_expl": "Listen to screen lock/unlock events",
   "edt_conf_os_events_lockEnable_title": "Listen to lock events",
   "edt_conf_os_events_suspendEnable_expl": "Listen to operating system suspend/resume events",

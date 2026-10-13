@@ -29,6 +29,10 @@ OsEventHandlerBase::OsEventHandlerBase()
 	: _isSuspendEnabled(false)
 	, _isLockEnabled(false)
 	, _isSuspendOnLock(false)
+	, _lockDelayMs(0)
+	, _isLocked(false)
+	, _lockStateApplied(false)
+	, _lockAppliedSuspend(false)
 	, _isSuspendRegistered(false)
 	, _isLockRegistered(false)
 	, _isService(false)
@@ -43,6 +47,9 @@ OsEventHandlerBase::OsEventHandlerBase()
 		_isService = true;
 	}
 	QObject::connect(this, &OsEventHandlerBase::signalEvent, EventHandler::getInstance().data(), &EventHandler::handleEvent);
+
+	_lockTimer.setSingleShot(true);
+	QObject::connect(&_lockTimer, &QTimer::timeout, this, &OsEventHandlerBase::applyLockState);
 
 	Debug(_log, "Operating System event handler created");
 }
@@ -68,6 +75,9 @@ void OsEventHandlerBase::handleSettingsUpdate(settings::type type, const QJsonDo
 		//Suspend on lock or go into idle mode
 		bool prevIsSuspendOnLock = _isSuspendOnLock;
 		_isSuspendOnLock = obj["suspendOnLockEnable"].toBool(false);
+
+		// How long the screen has to stay locked before the LEDs go off (0 = immediately)
+		_lockDelayMs = qBound(0, obj["lockDelay"].toInt(0), 3600) * 1000;
 
 		//Handle OS event related configurations
 		_isSuspendEnabled = obj["suspendEnable"].toBool(true);
@@ -118,28 +128,48 @@ void OsEventHandlerBase::lock(bool isLocked)
 	qCDebug(event_os) << "System lock state changed. System is now" << (isLocked ? "locked" : "unlocked");
 	if (isLocked)
 	{
-		emit signalEvent(Event::Lock);
-		if (_isSuspendOnLock)
+		if (_isLocked)
 		{
-			emit signalEvent(Event::Suspend);
+			return; // already locked, the delay keeps running
+		}
+		_isLocked = true;
+		emit signalEvent(Event::Lock);
+
+		if (_lockDelayMs <= 0)
+		{
+			applyLockState();
 		}
 		else
 		{
-			emit signalEvent(Event::Idle);
+			Info(_log, "Screen locked - LEDs go off in %d s unless it is unlocked before", _lockDelayMs / 1000);
+			_lockTimer.start(_lockDelayMs);
 		}
 	}
 	else
 	{
+		_lockTimer.stop();
+		_isLocked = false;
 		emit signalEvent(Event::Unlock);
-		if (_isSuspendOnLock)
+
+		// Only undo what was done: a lock that ended within the delay never switched anything off.
+		if (_lockStateApplied)
 		{
-			emit signalEvent(Event::Resume);
-		}
-		else
-		{
-			emit signalEvent(Event::ResumeIdle);
+			_lockStateApplied = false;
+			emit signalEvent(_lockAppliedSuspend ? Event::Resume : Event::ResumeIdle);
 		}
 	}
+}
+
+void OsEventHandlerBase::applyLockState()
+{
+	if (!_isLocked || _lockStateApplied)
+	{
+		return;
+	}
+
+	_lockStateApplied = true;
+	_lockAppliedSuspend = _isSuspendOnLock;
+	emit signalEvent(_lockAppliedSuspend ? Event::Suspend : Event::Idle);
 }
 
 void OsEventHandlerBase::quit()
