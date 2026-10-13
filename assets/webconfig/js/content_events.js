@@ -1,7 +1,9 @@
 $(document).ready(function () {
   performTranslation();
 
-  let isGuiMode = window.sysInfo.hyperion.isGuiMode;
+  const isGuiMode = window.sysInfo.hyperion.isGuiMode;
+  // Older servers do not report it: lock events were only available to GUI applications then
+  const lockEventsAvailable = window.sysInfo.hyperion.lockEventsAvailable ?? isGuiMode;
   const CEC_ENABLED = (jQuery.inArray("cec", window.serverInfo.services) !== -1);
 
   let conf_editor_osEvents = null;
@@ -78,7 +80,7 @@ $(document).ready(function () {
   }, true, true);
 
   conf_editor_osEvents.on('ready', function () {
-    if (!isGuiMode) {
+    if (!lockEventsAvailable) {
       showInputOptionsForKey(conf_editor_osEvents, "osEvents", "suspendEnable", false);
     }
   });

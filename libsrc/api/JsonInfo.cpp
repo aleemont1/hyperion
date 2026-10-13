@@ -638,6 +638,9 @@ QJsonObject JsonInfo::getSystemInfo()
 
 	QCoreApplication* app = QCoreApplication::instance();
 	hyperionInfo["isGuiMode"] = qobject_cast<QApplication*>(app) != nullptr;
+	// Lock/screensaver notifications arrive on the session bus, which a GUI application and a user
+	// service both have (same condition as in the OS event handler)
+	hyperionInfo["lockEventsAvailable"] = hyperionInfo["isGuiMode"].toBool() || !qEnvironmentVariableIsEmpty("DBUS_SESSION_BUS_ADDRESS");
 
 	info["hyperion"] = hyperionInfo;
 

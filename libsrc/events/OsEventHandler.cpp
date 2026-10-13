@@ -81,7 +81,10 @@ void OsEventHandlerBase::handleSettingsUpdate(settings::type type, const QJsonDo
 			unregisterOsEventHandler();
 		}
 
-		if (!_isService)
+		// A systemd user service is no GUI application but has the session bus, which is what the
+		// lock/screensaver notifications arrive on. Only a service without a session cannot listen.
+		const bool hasSessionBus = !qEnvironmentVariableIsEmpty("DBUS_SESSION_BUS_ADDRESS");
+		if (!_isService || hasSessionBus)
 		{
 			_isLockEnabled = obj["lockEnable"].toBool(true);
 			if (_isLockEnabled || _isSuspendOnLock != prevIsSuspendOnLock)
